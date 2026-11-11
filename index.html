@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>So fast transfer — transfert de fichiers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="folder.css">
+<style>
+:root{--mut:#8a8a8a;--line:rgba(255,255,255,.14)}
+*{box-sizing:border-box;margin:0}
+[hidden]{display:none!important}
+body{background:#000;color:#fff;font-family:Geist,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0}
+main{position:relative;z-index:1;min-height:100vh;display:grid;place-items:center;padding:40px 16px}
+.wrap{width:100%;max-width:520px}
+.brand{display:inline-block;font-weight:600;letter-spacing:-.03em;font-size:18px;color:#fff;text-decoration:none;margin-bottom:34px}.brand span{color:var(--mut)}
+h1{font-size:clamp(40px,8.5vw,64px);letter-spacing:-.045em;line-height:1;font-weight:600}
+.sub{color:var(--mut);margin:16px 0 26px;line-height:1.5;font-size:15px}
+.card{background:rgba(8,8,8,.76);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);border:1px solid var(--line);border-radius:22px;padding:20px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.drop{border:1px dashed rgba(255,255,255,.28);border-radius:14px;padding:32px 16px;text-align:center;color:var(--mut);cursor:pointer;transition:.2s;font-size:14px}
+.drop:hover,.drop.on{border-color:#fff;color:#fff;background:rgba(255,255,255,.05)}
+.plus{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;margin:0 auto 12px;font-size:20px;color:#fff}
+.row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:11px 0;border-bottom:1px solid var(--line);font-size:14px}
+.row>span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.mut{color:var(--mut);font-size:13px;margin-top:2px}
+.x{background:none;border:0;color:#fff;font-size:18px;cursor:pointer;margin-left:8px;opacity:.6}.x:hover{opacity:1}
+.opt{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:15px 0;border-bottom:1px solid var(--line);font-size:14px}
+.opt.nb{border:0}
+.sw{width:44px;height:26px;border-radius:99px;background:#2a2a2a;border:0;position:relative;cursor:pointer;transition:.25s;flex:none}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.25s}
+.sw.on{background:#fff}.sw.on::after{left:21px;background:#000}
+input[type=password],input[type=text],textarea{width:100%;background:#000;border:1px solid var(--line);color:#fff;border-radius:10px;padding:13px 14px;font:inherit;font-size:14px;margin-top:10px;outline:0;transition:.2s;resize:none}
+input:focus,textarea:focus{border-color:#fff}
+.seg{display:flex;gap:3px;background:#000;border:1px solid var(--line);border-radius:10px;padding:3px}
+.seg button{background:none;border:0;color:var(--mut);padding:6px 10px;border-radius:7px;font:inherit;font-size:13px;cursor:pointer}
+.seg button.on{background:#fff;color:#000;font-weight:600}
+.btn{display:block;width:100%;margin-top:16px;padding:15px;border-radius:12px;border:1px solid #fff;background:#fff;color:#000;font:inherit;font-weight:600;font-size:15px;cursor:pointer;transition:.2s}
+.btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 30px rgba(255,255,255,.18)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn.ghost{background:transparent;color:#fff;border-color:var(--line);margin-top:10px}
+.dl{background:#fff;color:#000;border:0;border-radius:9px;padding:8px 14px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;flex:none}
+.bar{height:3px;background:#222;border-radius:9px;margin-top:16px;overflow:hidden}.bar i{display:block;height:100%;width:0;background:#fff;transition:width .2s}
+.err{margin-top:12px;font-size:13px;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}
+.tags i{font-style:normal;font-size:12px;border:1px solid var(--line);border-radius:99px;padding:4px 10px;color:#ccc}
+
+/* dossier animé (zone de dépôt) */
+.drop{padding:78px 16px 24px}
+.fi{position:relative;width:320px;height:208px;margin:0 auto 20px;zoom:.8;pointer-events:none}
+.fi-folder{position:relative;display:flex;align-items:center;justify-content:center;width:87.5%;height:100%;margin:0 auto;background:#111;border:1px solid rgba(255,255,255,.1);border-radius:10px;box-shadow:inset 0 0 15.7px 16px rgba(255,255,255,.06)}
+.fi-page{position:absolute;top:8px;left:50%;margin-left:-64px;width:128px;border-radius:12px;transform:translate(var(--x0),var(--y0)) rotate(var(--r0));transition:transform var(--dur) var(--ease)}
+.fi.open .fi-page{transform:translate(var(--x1),var(--y1)) rotate(var(--r1))}
+.p1{--x0:-38px;--y0:2px;--r0:-3deg;--x1:-70px;--y1:-55px;--r1:-8deg;--dur:.6s;--ease:cubic-bezier(.34,1.25,.5,1);z-index:10}
+.p2{--x0:0px;--y0:0px;--r0:0deg;--x1:2px;--y1:-75px;--r1:1deg;--dur:.55s;--ease:cubic-bezier(.34,1.2,.5,1);z-index:20}
+.p3{--x0:42px;--y0:1px;--r0:3.5deg;--x1:75px;--y1:-60px;--r1:9deg;--dur:.58s;--ease:cubic-bezier(.34,1.3,.5,1);z-index:10}
+.fi-sheet{width:100%;padding:16px;border-radius:12px;background:linear-gradient(#f4f4f4,#d8d8d8);box-shadow:0 10px 15px -3px rgba(0,0,0,.5)}
+.fi-lines{display:flex;flex-direction:column;gap:8px}.fi-row{display:flex;gap:8px}.fi-line{flex:1;height:6px;border-radius:9999px;background:#bcbcbc}
+.fi-flap{position:absolute;left:-1px;right:-1px;bottom:-1px;height:176px;z-index:20;border-radius:24px;transform-origin:bottom;transition:transform .5s cubic-bezier(.34,1.3,.5,1)}
+.fi.open .fi-flap{transform:rotateX(-40deg)}
+.fi-flap svg{width:100%;height:100%;overflow:visible}
+.fi-blur{backdrop-filter:blur(6.5px);-webkit-backdrop-filter:blur(6.5px);clip-path:url(#bgblur_0_1_106_clip_path);height:100%;width:100%}
+/* globe + dossier de réception */
+.globe{width:220px;max-width:70%;aspect-ratio:1;margin:0 auto 8px}
+.globe.sm{width:170px}
+.globe canvas{width:100%;height:100%;opacity:0;transition:opacity 1s;cursor:grab;border-radius:50%}
+.fwrap{text-align:center;padding:26px 0 8px}
+.field{position:relative;margin-top:10px}
+.field input[type]{margin-top:0;padding-right:48px}
+.ib{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:34px;height:34px;display:grid;place-items:center;border:0;border-radius:8px;background:none;color:#fff;opacity:.65;cursor:pointer;transition:.2s}
+.ib:hover{opacity:1;background:rgba(255,255,255,.1)}
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<main><div class="wrap">
+  <a class="brand" href="/">So fast <span>transfer</span></a>
+
+  <!-- ENVOI -->
+  <section id="send">
+    <h1>Envoie.<br>Sans compte.</h1>
+    <p class="sub">Dépose tes fichiers, choisis la durée, ajoute un mot de passe si tu veux, et partage le lien.</p>
+    <div class="card">
+      <div id="result" hidden>
+        <div class="globe" id="gRes"></div>
+        <div class="mut">Ton lien est prêt</div>
+        <div class="field"><input type="text" id="link" readonly><button class="ib" id="copyIc" type="button" aria-label="Copier le lien"></button></div>
+        <div class="tags" id="tags"></div>
+        <button class="btn" id="copy">Copier le lien</button>
+        <button class="btn ghost" id="again">Nouvel envoi</button>
+      </div>
+      <div id="form">
+        <div class="drop" id="drop"><div class="fi" id="fi"><div class="fi-folder"><div class="fi-page p1"><div class="fi-sheet"><div class="fi-lines" data-lines></div></div></div><div class="fi-page p2"><div class="fi-sheet"><div class="fi-lines" data-lines></div></div></div><div class="fi-page p3"><div class="fi-sheet"><div class="fi-lines" data-lines></div></div></div></div><div class="fi-flap"><svg viewBox="0 0 235 121" fill="none" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <foreignObject x="-13" y="-13" width="262.4" height="148.4">
+          <div class="blur"></div>
+        </foreignObject>
+        <path id="Vector" data-figma-bg-blur-radius="13"
+          d="M104.615 0.350494L33.1297 0.838776C32.7542 0.841362 32.3825 0.881463 32.032 0.918854C31.6754 0.956907 31.3392 0.992086 31.0057 0.992096H31.0047C30.6871 0.99235 30.3673 0.962051 30.0272 0.929596C29.6927 0.897686 29.3384 0.863802 28.9803 0.866119L13.2693 0.967682H13.2527L13.2352 0.969635C13.1239 0.981406 13.0121 0.986674 12.9002 0.986237H9.91388C8.33299 0.958599 6.76052 1.22345 5.27423 1.76651H5.27325C4.33579 2.11246 3.48761 2.66213 2.7879 3.37393L2.49689 3.68839L2.492 3.69424C1.62667 4.73882 1.00023 5.96217 0.656067 7.27725C0.653324 7.28773 0.654065 7.29886 0.652161 7.30948C0.3098 8.62705 0.257231 10.0048 0.499817 11.3446L12.2147 114.399L12.2156 114.411L12.2176 114.423C12.6046 116.568 13.7287 118.508 15.3934 119.902C17.058 121.297 19.1572 122.056 21.3231 122.049V122.05H215.379C217.76 122.02 220.064 121.192 221.926 119.698V119.697C223.657 118.384 224.857 116.485 225.305 114.35L225.307 114.339L235.914 53.3798L235.968 53.1093L235.97 53.0985L235.971 53.0888C236.134 51.8978 236.044 50.685 235.705 49.5321C235.307 48.1669 234.63 46.9005 233.717 45.8144L233.383 45.4296C232.58 44.5553 231.614 43.8449 230.539 43.3398C229.311 42.7628 227.971 42.4685 226.616 42.4774H146.746C144.063 42.4705 141.423 41.8004 139.056 40.5263C136.691 39.2522 134.671 37.4127 133.175 35.1689L113.548 5.05948L113.544 5.05362L113.539 5.04776C112.545 3.65165 111.238 2.51062 109.722 1.72061C108.266 0.886502 106.627 0.422235 104.952 0.365143V0.364166L104.633 0.350494H104.615Z"
+          fill="url(#paint0_linear_1_106)" fill-opacity="0.55"
+          stroke="url(#paint1_linear_1_106)" stroke-width="0.7"/>
+        <defs>
+          <clipPath id="bgblur_0_1_106_clip_path" transform="translate(13 13)">
+            <path d="M104.615 0.350494L33.1297 0.838776C32.7542 0.841362 32.3825 0.881463 32.032 0.918854C31.6754 0.956907 31.3392 0.992086 31.0057 0.992096H31.0047C30.6871 0.99235 30.3673 0.962051 30.0272 0.929596C29.6927 0.897686 29.3384 0.863802 28.9803 0.866119L13.2693 0.967682H13.2527L13.2352 0.969635C13.1239 0.981406 13.0121 0.986674 12.9002 0.986237H9.91388C8.33299 0.958599 6.76052 1.22345 5.27423 1.76651H5.27325C4.33579 2.11246 3.48761 2.66213 2.7879 3.37393L2.49689 3.68839L2.492 3.69424C1.62667 4.73882 1.00023 5.96217 0.656067 7.27725C0.653324 7.28773 0.654065 7.29886 0.652161 7.30948C0.3098 8.62705 0.257231 10.0048 0.499817 11.3446L12.2147 114.399L12.2156 114.411L12.2176 114.423C12.6046 116.568 13.7287 118.508 15.3934 119.902C17.058 121.297 19.1572 122.056 21.3231 122.049V122.05H215.379C217.76 122.02 220.064 121.192 221.926 119.698V119.697C223.657 118.384 224.857 116.485 225.305 114.35L225.307 114.339L235.914 53.3798L235.968 53.1093L235.97 53.0985L235.971 53.0888C236.134 51.8978 236.044 50.685 235.705 49.5321C235.307 48.1669 234.63 46.9005 233.717 45.8144L233.383 45.4296C232.58 44.5553 231.614 43.8449 230.539 43.3398C229.311 42.7628 227.971 42.4685 226.616 42.4774H146.746C144.063 42.4705 141.423 41.8004 139.056 40.5263C136.691 39.2522 134.671 37.4127 133.175 35.1689L113.548 5.05948L113.544 5.05362L113.539 5.04776C112.545 3.65165 111.238 2.51062 109.722 1.72061C108.266 0.886502 106.627 0.422235 104.952 0.365143V0.364166L104.633 0.350494H104.615Z"/>
+          </clipPath>
+          <linearGradient id="paint0_linear_1_106" x1="114.7" y1="0.700104" x2="114.7" y2="121.7" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#262626"/><stop offset="1" stop-color="#1a1a1a"/>
+          </linearGradient>
+          <linearGradient id="paint1_linear_1_106" x1="114.7" y1="0.700104" x2="114.7" y2="121.7" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#424242" stop-opacity="0.04"/><stop offset="1" stop-color="#212121" stop-opacity="0.3"/>
+          </linearGradient>
+        </defs>
+      </svg></div></div>Glisse tes fichiers ici ou clique pour parcourir<input id="pick" type="file" multiple hidden></div>
+        <div id="list"></div>
+        <input type="text" id="title" placeholder="Titre (facultatif)" maxlength="80">
+        <textarea id="msg" rows="2" placeholder="Message (facultatif)" maxlength="500"></textarea>
+        <div class="opt"><b>Expiration</b><div class="seg" id="ttl"><button data-v="86400">1 j</button><button data-v="604800" class="on">7 j</button><button data-v="1296000">15 j</button><button data-v="2592000">30 j</button></div></div>
+        <div class="opt"><b>Téléchargements</b><div class="seg" id="lim"><button data-v="1">1</button><button data-v="10">10</button><button data-v="50">50</button><button data-v="0" class="on">∞</button></div></div>
+        <div class="opt"><div><b>Mot de passe</b><div class="mut">Protège l’accès au lien</div></div><button class="sw" id="swPw" aria-label="Mot de passe"></button></div>
+        <div id="pwBox" hidden>
+          <div class="field"><input type="password" id="pw" placeholder="Mot de passe (4 caractères min.)"><button class="ib eye" data-for="pw" type="button" aria-label="Afficher le mot de passe"></button></div>
+          <div class="opt nb"><div><b>Chiffrer les fichiers</b><div class="mut">AES-256 dans ton navigateur · max 500 Mo par fichier</div></div><button class="sw" id="swEnc" aria-label="Chiffrement"></button></div>
+        </div>
+        <div class="bar" id="bar" hidden><i></i></div>
+        <div class="err" id="err" hidden></div>
+        <button class="btn" id="go" disabled>Envoyer</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- RÉCEPTION -->
+  <section id="recv" hidden>
+    <h1 id="rTitle">Reçu.</h1>
+    <p class="sub" id="rSub">Chargement…</p>
+    <div class="card" id="rCard" hidden>
+      <div class="globe sm" id="gRecv"></div>
+      <div id="lock" hidden>
+        <div class="mut">Ce transfert est protégé</div>
+        <div class="field"><input type="password" id="rpw" placeholder="Mot de passe"><button class="ib eye" data-for="rpw" type="button" aria-label="Afficher le mot de passe"></button></div>
+        <button class="btn" id="unlock">Déverrouiller</button>
+      </div>
+      <div class="fwrap" id="fwrap" hidden><div id="rFolder"></div></div>
+      <div id="files" hidden></div>
+      <button class="btn" id="zip" hidden>Tout télécharger (.zip)</button>
+      <div class="err" id="rErr" hidden></div>
+    </div>
+  </section>
+</div></main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="folder.js"></script>
+<script type="module">
+import { upload } from 'https://esm.sh/@vercel/blob@1/client';
+// Adresse publique utilisée dans les liens de partage (change-la si tu ajoutes un nom de domaine)
+const PUBLIC_URL = 'https://sofast-transfer.vercel.app';
+const $ = (s) => document.querySelector(s);
+const fmt = (n) => n > 1e9 ? (n / 1e9).toFixed(1) + ' Go' : n > 1e6 ? (n / 1e6).toFixed(1) + ' Mo' : Math.max(1, Math.round(n / 1e3)) + ' Ko';
+const show = (el, on = true) => (el.hidden = !on);
+const api = (body) => fetch('/api/t', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+
+/* ---------- crypto ---------- */
+const enc = new TextEncoder();
+const hex = (b) => [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, '0')).join('');
+const b64 = (b) => btoa(String.fromCharCode(...new Uint8Array(b)));
+const unb64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+async function derive(pw, salt) {
+  const km = await crypto.subtle.importKey('raw', enc.encode(pw), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt, iterations: 250000, hash: 'SHA-256' }, km, 512);
+  return { key: await crypto.subtle.importKey('raw', bits.slice(0, 32), 'AES-GCM', false, ['encrypt', 'decrypt']), token: hex(bits.slice(32)) };
+}
+
+/* ---------- fond animé (grille de formes + ondulations) ---------- */
+const cv = $('#bg'), cx = cv.getContext('2d'), C = 12;
+let cols, rows, ch;
+function size() {
+  const d = Math.min(devicePixelRatio || 1, 2);
+  cv.width = innerWidth * d; cv.height = innerHeight * d; cx.setTransform(d, 0, 0, d, 0, 0);
+  cols = Math.ceil(innerWidth / C); rows = Math.ceil(innerHeight / C); ch = new Float32Array(cols * rows);
+}
+addEventListener('resize', size); size();
+addEventListener('pointermove', (e) => {
+  const c0 = e.clientX / C, r0 = e.clientY / C;
+  for (let r = Math.max(0, (r0 - 4) | 0); r < Math.min(rows, r0 + 5); r++)
+    for (let c = Math.max(0, (c0 - 4) | 0); c < Math.min(cols, c0 + 5); c++)
+      ch[r * cols + c] = Math.min(1, ch[r * cols + c] + 0.35 * Math.exp(-((c - c0) ** 2 + (r - r0) ** 2) / 6));
+}, { passive: true });
+const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function draw(t) {
+  cx.clearRect(0, 0, innerWidth, innerHeight);
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+    const i = r * cols + c, x = c * C + C / 2, y = r * C + C / 2;
+    const n = (Math.sin(c * 0.11 + t * 4e-4) + Math.sin(r * 0.13 - t * 3e-4) + Math.sin((c + r) * 0.07 + t * 2e-4)) / 6 + 0.5;
+    const v = Math.min(1, n * 0.85 + ch[i]), band = Math.min(2, (v * 3) | 0);
+    const rad = Math.hypot(x / innerWidth - 0.5, y / innerHeight - 0.5) * 1.5;
+    const a = Math.max(0, 1 - rad * rad * 1.1) * 0.9, g = (55 + v * 120 + ch[i] * 80) | 0, s = [0.16, 0.3, 0.4][band] * C;
+    ch[i] *= 0.94;
+    if (a < 0.03) continue;
+    cx.fillStyle = `rgba(${g},${g},${g},${a})`; cx.beginPath();
+    if (band === 0) cx.arc(x, y, s, 0, 6.3); else if (band === 1) cx.rect(x - s, y - s, 2 * s, 2 * s);
+    else { cx.moveTo(x, y - s); cx.lineTo(x + s, y + s); cx.lineTo(x - s, y + s); cx.closePath(); }
+    cx.fill();
+  }
+  if (!still) requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+
+
+/* ---------- globe (cobe) ---------- */
+let createGlobe;
+const M = (location, color) => ({ location, size: 0.05, color });
+const markers = [M([37.7595, -122.4367]), M([40.7128, -74.006], [1, 0, 0]), M([35.6895, 139.6917], [0, 0.5, 1]), M([-33.8688, 151.2093], [0, 1, 0]), M([-22.9068, -43.1729], [0.8, 0, 0.8]), M([48.8566, 2.3522], [1, 1, 0]), M([41.1579, -8.6291], [1, 0.5, 0]), M([37.9838, 23.7275], [1, 0.5, 1]), M([41.9028, 12.4964], [0.5, 0.3, 0]), M([27.7172, 85.324], [0, 0.5, 1]), M([43.4643, -0.5167], [0, 1, 0]), M([12.6683, -8.0076], [1, 1, 0]), M([11.55, 43.1667], [0.8, 0, 0.8])];
+async function mountGlobe(box) {
+  if (box.firstChild) return;
+  try {
+    createGlobe ||= (await import('https://cdn.jsdelivr.net/npm/cobe@0.6.3/+esm')).default;
+    const cv = document.createElement('canvas'); box.append(cv);
+    const w = box.clientWidth || 200; let phi = 0, r = 0, rT = 0, down = null, mv = 0;
+    createGlobe(cv, {
+      devicePixelRatio: 2, width: w * 2, height: w * 2, phi: 0, theta: 0.2, dark: 1.1, diffuse: 3, mapSamples: 16000,
+      mapBrightness: 1.8, mapBaseBrightness: 0.05, baseColor: [1, 1, 1], markerColor: [0.98, 0.39, 0.08], glowColor: [1, 1, 1], opacity: 0.7, markers,
+      onRender: (st) => { r += (rT - r) * 0.1; st.phi = phi + r; phi += 0.005; st.width = w * 2; st.height = w * 2; }
+    });
+    setTimeout(() => (cv.style.opacity = 0.7));
+    cv.onpointerdown = (e) => { down = e.clientX - mv; cv.style.cursor = 'grabbing'; };
+    cv.onpointerup = cv.onpointerout = () => { down = null; cv.style.cursor = 'grab'; };
+    cv.onpointermove = (e) => { if (down !== null) { mv = e.clientX - down; rT = mv / 200; } };
+  } catch (e) { console.warn('globe indisponible', e); }
+}
+
+/* ---------- envoi ---------- */
+let files = [], ttl = 604800, limit = 0, usePw = false, useEnc = false;
+const seg = (id, set) => $(id).addEventListener('click', (e) => {
+  if (!e.target.dataset.v) return;
+  $(id).querySelectorAll('button').forEach((b) => b.classList.toggle('on', b === e.target));
+  set(+e.target.dataset.v);
+});
+seg('#ttl', (v) => (ttl = v)); seg('#lim', (v) => (limit = v));
+const check = () => ($('#go').disabled = !files.length || (usePw && $('#pw').value.length < 4));
+function renderList() {
+  const l = $('#list'); l.replaceChildren();
+  files.forEach((f, i) => {
+    const row = document.createElement('div'); row.className = 'row';
+    const n = document.createElement('span'); n.textContent = f.name;
+    const s = document.createElement('span'); s.className = 'mut'; s.textContent = fmt(f.size) + ' ';
+    const x = document.createElement('button'); x.className = 'x'; x.textContent = '×';
+    x.onclick = () => { files.splice(i, 1); renderList(); };
+    s.append(x); row.append(n, s); l.append(row);
+  });
+  check(); fiSync();
+}
+let hov = false, drg = false;
+const fiSync = () => $('#fi').classList.toggle('open', hov || drg || files.length > 0);
+document.querySelectorAll('[data-lines]').forEach((el) => {
+  el.innerHTML = '<div class="fi-line" style="flex:none;width:100%"></div>' + '<div class="fi-row"><div class="fi-line"></div><div class="fi-line"></div></div>'.repeat(8);
+});
+$('#drop').onmouseenter = () => { hov = true; fiSync(); };
+$('#drop').onmouseleave = () => { hov = false; fiSync(); };
+const add = (fl) => { files.push(...fl); renderList(); };
+$('#drop').onclick = () => $('#pick').click();
+$('#pick').onchange = (e) => { add(e.target.files); e.target.value = ''; };
+$('#drop').ondragover = (e) => { e.preventDefault(); drg = true; $('#drop').classList.add('on'); fiSync(); };
+$('#drop').ondragleave = () => { drg = false; $('#drop').classList.remove('on'); fiSync(); };
+$('#drop').ondrop = (e) => { e.preventDefault(); drg = false; $('#drop').classList.remove('on'); add(e.dataTransfer.files); };
+$('#swPw').onclick = () => {
+  usePw = !usePw; $('#swPw').classList.toggle('on', usePw); show($('#pwBox'), usePw);
+  if (!usePw) { useEnc = false; $('#swEnc').classList.remove('on'); } check();
+};
+$('#swEnc').onclick = () => { useEnc = !useEnc; $('#swEnc').classList.toggle('on', useEnc); };
+$('#pw').oninput = check;
+
+$('#go').onclick = async () => {
+  const err = $('#err'), bar = $('#bar'); show(err, false); show(bar); $('#go').disabled = true;
+  try {
+    if (usePw && useEnc && files.some((f) => f.size > 5e8)) throw new Error('Chiffrement limité à 500 Mo par fichier.');
+    let key, token, salt;
+    if (usePw) {
+      const s = crypto.getRandomValues(new Uint8Array(16)), d = await derive($('#pw').value, s);
+      key = d.key; token = useEnc ? d.token : $('#pw').value; salt = b64(s);
+    }
+    const total = files.reduce((a, f) => a + f.size, 0) || 1, done = files.map(() => 0), out = [];
+    for (let i = 0; i < files.length; i++) {
+      let body = files[i], iv = null;
+      if (usePw && useEnc) {
+        const v = crypto.getRandomValues(new Uint8Array(12));
+        body = new Blob([await crypto.subtle.encrypt({ name: 'AES-GCM', iv: v }, key, await files[i].arrayBuffer())]); iv = b64(v);
+      }
+      const r = await upload('f/' + files[i].name + (iv ? '.enc' : ''), body, {
+        access: 'public', handleUploadUrl: '/api/upload', contentType: 'application/octet-stream', multipart: true,
+        onUploadProgress: ({ loaded }) => { done[i] = loaded; bar.firstChild.style.width = (done.reduce((a, b) => a + b, 0) / total) * 100 + '%'; }
+      });
+      out.push({ name: files[i].name, size: files[i].size, url: r.url, iv });
+    }
+    const res = await api({ a: 'create', files: out, ttl, limit, token, salt, enc: usePw && useEnc, title: $('#title').value, message: $('#msg').value });
+    const j = await res.json(); if (!res.ok) throw new Error(j.error);
+    $('#link').value = `${PUBLIC_URL}/?d=${j.id}`;
+    const tags = [usePw && 'Mot de passe', usePw && useEnc && 'Chiffré E2E', `Expire dans ${ttl / 86400} j`, limit && `${limit} téléchargement${limit > 1 ? 's' : ''} max`].filter(Boolean);
+    $('#tags').replaceChildren(...tags.map((t) => Object.assign(document.createElement('i'), { textContent: t })));
+    show($('#form'), false); show($('#result')); mountGlobe($('#gRes'));
+  } catch (e) {
+    let m = e.message || 'Échec de l’envoi';
+    if (/client token/i.test(m)) {
+      try {
+        const h = await (await fetch('/api/upload')).json();
+        m = h.tokenOk ? 'Le serveur a refusé l’envoi : regarde les Logs Vercel de /api/upload.' : 'Le stockage Blob n’est pas connecté : ajoute-le dans Storage, puis fais Redeploy.';
+      } catch { m = 'L’API /api/upload est injoignable : le dossier api/ doit être à la racine du dépôt, et ouvre le site via le domaine de production.'; }
+    }
+    err.textContent = m; show(err); $('#go').disabled = false;
+  }
+  show(bar, false);
+};
+const ic = (p) => '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + p + '</svg>';
+const I = {
+  copy: ic('<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>'),
+  check: ic('<path d="M20 6 9 17l-5-5"/>'),
+  eye: ic('<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>'),
+  off: ic('<path d="M17.94 17.94A10.9 10.9 0 0 1 12 19c-6.5 0-10-7-10-7a18 18 0 0 1 5.06-5.94M9.9 4.24A9.1 9.1 0 0 1 12 4c6.5 0 10 7 10 7a18 18 0 0 1-2.16 3.19M1 1l22 22"/>')
+};
+document.querySelectorAll('.eye').forEach((b) => {
+  b.innerHTML = I.eye;
+  b.onclick = () => {
+    const i = $('#' + b.dataset.for), hidden = i.type === 'password';
+    i.type = hidden ? 'text' : 'password'; b.innerHTML = hidden ? I.off : I.eye;
+    b.setAttribute('aria-label', hidden ? 'Masquer le mot de passe' : 'Afficher le mot de passe');
+  };
+});
+$('#copyIc').innerHTML = I.copy;
+const doCopy = async () => {
+  await navigator.clipboard.writeText($('#link').value);
+  $('#copy').textContent = 'Copié ✓'; $('#copyIc').innerHTML = I.check;
+  setTimeout(() => { $('#copy').textContent = 'Copier le lien'; $('#copyIc').innerHTML = I.copy; }, 1500);
+};
+$('#copy').onclick = doCopy; $('#copyIc').onclick = doCopy;
+$('#again').onclick = () => location.assign('/');
+
+/* ---------- réception ---------- */
+const id = new URLSearchParams(location.search).get('d');
+if (id) {
+  show($('#send'), false); show($('#recv'));
+  let info, auth = null;
+  const rErr = (m) => { $('#rErr').textContent = m; show($('#rErr'), !!m); };
+  const saveAs = (blob, name) => { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 6e4); };
+  const grab = async () => { const r = await api({ a: 'grab', id, token: auth?.token }); const j = await r.json(); if (!r.ok) throw new Error(j.error); return j.files; };
+  const bytes = async (f) => { const buf = await (await fetch(f.url)).arrayBuffer(); return f.iv ? crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(f.iv) }, auth.key, buf) : buf; };
+  const dl = async (i, b) => {
+    rErr(''); if (b) b.textContent = '…';
+    try {
+      const g = (await grab())[i];
+      if (!g.iv && g.size > 2e8) location.href = g.url + '?download=1'; else saveAs(new Blob([await bytes(g)]), g.name);
+    } catch (e) { rErr(e.message || 'Téléchargement impossible'); }
+    if (b) b.textContent = 'Télécharger';
+  };
+  let fo;
+  const list = () => {
+    show($('#lock'), false);
+    show($('#fwrap')); fo?.destroy();
+    fo = Folder($('#rFolder'), {
+      label: info.title || (info.files.length + (info.files.length > 1 ? ' fichiers' : ' fichier')),
+      items: info.files.slice(0, 6).map((f) => ({ title: f.name })),
+      variant: 'solid', layout: 'spread', color: '#d9d9d9', paperColor: '#ffffff', tabPosition: 'right', openOn: 'click',
+      size: 1.1, peek: true, intro: true, draggable: true, zoomOnClick: false, theme: 'dark',
+      onItemClick: (_, i) => dl(i)
+    }); const box = $('#files'); show(box); box.replaceChildren();
+    info.files.forEach((f, i) => {
+      const row = document.createElement('div'); row.className = 'row';
+      const n = document.createElement('span'); n.textContent = f.name;
+      const m = document.createElement('div'); m.className = 'mut'; m.textContent = fmt(f.size); n.append(m);
+      const b = document.createElement('button'); b.className = 'dl'; b.textContent = 'Télécharger';
+      b.onclick = () => dl(i, b);
+      row.append(n, b); box.append(row);
+    });
+    if (info.files.length > 1) {
+      show($('#zip')); $('#zip').onclick = async () => {
+        rErr(''); $('#zip').textContent = 'Préparation…';
+        try { const z = new JSZip(); for (const f of await grab()) z.file(f.name, await bytes(f)); saveAs(await z.generateAsync({ type: 'blob' }), (info.title || 'so-fast-transfer') + '.zip'); }
+        catch (e) { rErr(e.message || 'Échec du zip'); }
+        $('#zip').textContent = 'Tout télécharger (.zip)';
+      };
+    }
+  };
+  (async () => {
+    const r = await fetch('/api/t?id=' + encodeURIComponent(id));
+    if (!r.ok) { $('#rTitle').textContent = 'Introuvable.'; $('#rSub').textContent = 'Ce lien n’existe pas ou a expiré.'; return; }
+    info = await r.json();
+    $('#rTitle').textContent = info.title || 'Reçu.';
+    const exp = info.exp ? ` · expire le ${new Date(info.exp).toLocaleDateString('fr-FR')}` : '';
+    $('#rSub').textContent = (info.message || (info.encrypted ? 'Fichiers chiffrés de bout en bout.' : 'Des fichiers t’attendent.')) + exp + (info.left !== null ? ` · ${info.left} téléchargement(s) restant(s)` : '');
+    show($('#rCard')); mountGlobe($('#gRecv'));
+    if (!info.protected) return list();
+    show($('#lock'));
+    const go = async () => {
+      rErr('');
+      const pw = $('#rpw').value, d = info.encrypted ? await derive(pw, unb64(info.salt)) : { token: pw };
+      const ok = (await api({ a: 'check', id, token: d.token })).ok;
+      if (ok) { auth = d; list(); } else rErr('Mot de passe incorrect');
+    };
+    $('#unlock').onclick = go; $('#rpw').onkeydown = (e) => e.key === 'Enter' && go();
+  })();
+}
+</script>
+</body>
+</html>
